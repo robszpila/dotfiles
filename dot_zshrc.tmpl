@@ -1,0 +1,75 @@
+{{/* ~/.zshrc — applies to mba, mac-dev, dgx with per-machine bits at the bottom. */}}
+
+# --- Homebrew --------------------------------------------------------------
+{{- if eq .chezmoi.os "darwin" }}
+if [ -x /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+{{- end }}
+
+# --- PATH ------------------------------------------------------------------
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+
+# --- History ---------------------------------------------------------------
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_VERIFY EXTENDED_HISTORY
+
+# --- Editor ----------------------------------------------------------------
+export EDITOR="code --wait"
+export VISUAL="$EDITOR"
+
+# --- Completion ------------------------------------------------------------
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# --- Aliases ---------------------------------------------------------------
+alias ll='eza -lah --git --icons=auto'
+alias l='eza -1 --icons=auto'
+alias lt='eza --tree --level=2 --icons=auto'
+alias cat='bat --paging=never --style=plain'
+alias g='git'
+alias gs='git status'
+alias gd='git diff'
+alias gl='git log --oneline --graph --decorate -20'
+alias gp='git pull --rebase'
+alias gco='git checkout'
+alias gb='git branch'
+
+# safer rm-ish
+alias rmi='rm -i'
+
+# --- fzf -------------------------------------------------------------------
+{{- if eq .chezmoi.os "darwin" }}
+[ -f "$(brew --prefix)/opt/fzf/shell/key-bindings.zsh" ] && source "$(brew --prefix)/opt/fzf/shell/key-bindings.zsh"
+[ -f "$(brew --prefix)/opt/fzf/shell/completion.zsh" ] && source "$(brew --prefix)/opt/fzf/shell/completion.zsh"
+{{- else if eq .chezmoi.os "linux" }}
+[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+[ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh
+{{- end }}
+
+# --- zoxide (smart cd) -----------------------------------------------------
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+
+# --- starship prompt -------------------------------------------------------
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
+# --- Per-machine bits ------------------------------------------------------
+{{- if eq .machine_type "mac-dev" }}
+# mac-dev: Android SDK
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+{{- end }}
+
+{{- if eq .machine_type "dgx" }}
+# dgx: CUDA paths if NVIDIA stack is installed
+[ -d /usr/local/cuda/bin ] && export PATH="/usr/local/cuda/bin:$PATH"
+[ -d /usr/local/cuda/lib64 ] && export LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}"
+{{- end }}
+
+# --- Local overrides (gitignored) ------------------------------------------
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local

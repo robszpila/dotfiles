@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Re-runs whenever this script's content changes. Installs OS packages
+# appropriate to the machine_type. Runs BEFORE dotfiles are applied so any
+# tool that a dotfile expects (eza, bat, starship) is already available.
+set -euo pipefail
+
+log() { printf "\033[1;34m==>\033[0m %s\n" "$*"; }
+
+{{ if eq .chezmoi.os "darwin" -}}
+log "Installing macOS packages via Homebrew (machine_type={{ .machine_type }})"
+
+brew bundle --no-lock --file=- <<'BREWFILE'
+# --- Common to every Mac ---
+brew "bat"
+brew "chezmoi"
+brew "eza"
+brew "fd"
+brew "fzf"
+brew "gh"
+brew "git"
+brew "git-lfs"
+brew "jq"
+brew "ripgrep"
+brew "starship"
+brew "tmux"
+brew "tree"
+brew "watch"
+brew "wget"
+brew "zoxide"
+
+# --- Casks common to every Mac ---
+cask "tailscale"
+cask "syncthing"
+cask "enpass"
+{{ if eq .machine_type "mba" -}}
+# --- mba (daily driver) ---
+cask "google-chrome"
+cask "visual-studio-code"
+cask "ghostty"
+cask "raycast"
+cask "obsidian"
+cask "rectangle"
+cask "claude"
+{{ end -}}
+{{ if eq .machine_type "mac-dev" -}}
+# --- mac-dev (headless iOS/Android dev box) ---
+brew "cocoapods"
+brew "watchman"
+brew "fastlane"
+cask "android-studio"
+cask "firefox"
+cask "amphetamine-enhancer"
+# Note: Xcode is App Store, not brew. Install manually after first apply.
+{{ end -}}
+BREWFILE
+
+{{ else if eq .chezmoi.os "linux" -}}
+log "Installing Linux packages via apt (machine_type={{ .machine_type }})"
+
+# Most modern dev CLIs are available in the Ubuntu 24.04+ repos.
+# Pinning to apt over brew-on-linux keeps the DGX dependency surface small.
+sudo apt-get update
+sudo apt-get install -y \
+  bat \
+  curl \
+  fd-find \
+  fzf \
+  git \
+  git-lfs \
+  jq \
+  ripgrep \
+  tmux \
+  tree \
+  unzip \
+  wget \
+  zoxide \
+  zsh
+
+# Symlinks: Ubuntu names some tools differently
+mkdir -p "$HOME/.local/bin"
+[ ! -e "$HOME/.local/bin/fd" ] && ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd" || true
+[ ! -e "$HOME/.local/bin/bat" ] && ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat" || true
+
+# eza (not in Ubuntu repos until recently — install via cargo or release)
+if ! command -v eza >/dev/null 2>&1; then
+  log "Installing eza"
+  sudo mkdir -p /etc/apt/keyrings
+  wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
+  sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+  sudo apt-get update && sudo apt-get install -y eza
+fi
+
+# starship
+if ! command -v starship >/dev/null 2>&1; then
+  log "Installing starship"
+  curl -sS https://starship.rs/install.sh | sh -s -- -y
+fi
+
+# gh
+if ! command -v gh >/dev/null 2>&1; then
+  log "Installing gh"
+  (type -p wget >/dev/null || sudo apt-get install -y wget) \
+    && sudo mkdir -p -m 755 /etc/apt/keyrings \
+    && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+    && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && sudo apt-get update \
+    && sudo apt-get install -y gh
+fi
+
+{{ end -}}
+
+log "Package install complete."

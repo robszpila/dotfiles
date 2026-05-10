@@ -1,0 +1,52 @@
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    default = current
+    autoSetupRemote = true
+
+[fetch]
+    prune = true
+
+[rebase]
+    autosquash = true
+    autostash = true
+
+[merge]
+    conflictstyle = zdiff3
+
+[diff]
+    algorithm = histogram
+    colorMoved = default
+
+[core]
+    excludesfile = ~/.gitignore_global
+    editor = code --wait
+    pager = less -FRX
+
+[color]
+    ui = auto
+
+[alias]
+    co = checkout
+    br = branch
+    st = status -sb
+    ci = commit
+    last = log -1 HEAD
+    lg = log --oneline --graph --decorate -20
+    unstage = reset HEAD --
+    amend = commit --amend --no-edit
+    pushf = push --force-with-lease
+
+[help]
+    autocorrect = prompt
+
+[rerere]
+    enabled = true

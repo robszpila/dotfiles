@@ -1,0 +1,12 @@
+{{/* Prompts on `chezmoi init`. Answers cached at ~/.config/chezmoi/chezmoi.toml. */}}
+
+{{- $name := promptStringOnce . "name" "Your full name" -}}
+{{- $email := promptStringOnce . "email" "Your email" -}}
+{{- $github_user := promptStringOnce . "github_user" "Your GitHub username" -}}
+{{- $machine_type := promptChoiceOnce . "machine_type" "Machine type" (list "mba" "mac-dev" "dgx" "other") -}}
+
+[data]
+    name = {{ $name | quote }}
+    email = {{ $email | quote }}
+    github_user = {{ $github_user | quote }}
+    machine_type = {{ $machine_type | quote }}
