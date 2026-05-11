@@ -49,8 +49,9 @@ brew "watchman"
 brew "fastlane"
 cask "android-studio"
 cask "firefox"
-cask "amphetamine-enhancer"
 # Note: Xcode is App Store, not brew. Install manually after first apply.
+# Note: pmset config in run_onchange_after_macos-defaults handles "stay awake"
+#       for headless mac-dev; no need for Amphetamine/AE on top of that.
 {{ end -}}
 BREWFILE
 
