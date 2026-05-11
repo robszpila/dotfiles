@@ -35,6 +35,16 @@ if [ "$OS" = "Darwin" ]; then
     log "Xcode Command Line Tools present"
   fi
 
+  # Rosetta 2 (Apple Silicon only; some casks still ship Intel binaries, e.g. Enpass)
+  if [ "$(uname -m)" = "arm64" ]; then
+    if ! arch -x86_64 /usr/bin/true >/dev/null 2>&1; then
+      log "Installing Rosetta 2 (requires sudo + license accept)..."
+      sudo softwareupdate --install-rosetta --agree-to-license
+    else
+      log "Rosetta 2 present"
+    fi
+  fi
+
   # Homebrew
   if ! command -v brew >/dev/null 2>&1; then
     log "Installing Homebrew..."
