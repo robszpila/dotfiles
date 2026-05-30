@@ -29,8 +29,8 @@ brew "wget"
 brew "zoxide"
 
 # --- Casks common to every Mac ---
-cask "tailscale"
-cask "syncthing"
+cask "tailscale-app"   # renamed from "tailscale" (old token now 404s; bare formula is the CLI daemon)
+cask "syncthing-app"   # renamed from "syncthing" (old token now 404s; bare formula is the CLI daemon)
 cask "enpass"
 {{ if eq .machine_type "mba" -}}
 # --- mba (daily driver) ---
