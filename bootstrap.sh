@@ -2,8 +2,8 @@
 # Bootstrap a fresh machine: install build deps, Homebrew (macOS), chezmoi,
 # then run `chezmoi init --apply` against this repo.
 #
-# Usage:
-#   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robszpila/dotfiles/main/bootstrap.sh)"
+# Usage (use bash, not sh — Ubuntu's /bin/sh is dash and lacks `set -o pipefail`):
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/robszpila/dotfiles/main/bootstrap.sh)"
 #
 # Override the repo (e.g., testing a fork or branch):
 #   DOTFILES_REPO=git@github.com:robszpila/dotfiles.git bash bootstrap.sh
@@ -11,7 +11,11 @@
 # To install tools only without applying dotfiles (e.g., to inspect first):
 #   APPLY=0 bash bootstrap.sh
 
-set -euo pipefail
+set -eu
+# pipefail isn't POSIX — dash (Ubuntu /bin/sh) errors on it. Enable only where supported
+# (bash/zsh) so the script also survives being run via `sh -c`.
+# shellcheck disable=SC3040
+(set -o pipefail) 2>/dev/null && set -o pipefail || true
 
 DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/robszpila/dotfiles.git}"
 APPLY="${APPLY:-1}"
