@@ -110,6 +110,25 @@ if ! command -v gh >/dev/null 2>&1; then
     && sudo apt-get install -y gh
 fi
 
+# Make zsh the default shell — apt installs it but never chsh's, so on Ubuntu
+# the login shell stays bash and ~/.zshrc never loads. sudo avoids a password prompt.
+_me="$(id -un)"
+if [ "$(getent passwd "$_me" | cut -d: -f7)" != "$(command -v zsh)" ]; then
+  log "Setting default shell to zsh (re-login to take effect)"
+  sudo chsh -s "$(command -v zsh)" "$_me"
+fi
+{{ if eq .machine_type "dgx" -}}
+
+# --- dgx: Android build toolchain -----------------------------------------
+# Headless build box (no emulator/GUI). JDK for Gradle + Android SDK, then the
+# ARM64 build-tools swap (Google ships aapt2/aidl/zipalign/split-select x86_64-only;
+# DGX is aarch64). NOTE: the SDK install + aapt2 swap are intentionally NOT here yet —
+# they're finalized at execution time once AGP version is known and the cmdline-tools
+# + commit451 ARM64 asset URLs are verified against current. JDK is safe to install now.
+log "Installing JDK for Android/Gradle (dgx)"
+sudo apt-get install -y openjdk-17-jdk-headless
+{{ end -}}
+
 {{ end -}}
 
 log "Package install complete."

@@ -19,7 +19,14 @@ SAVEHIST=50000
 setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_VERIFY EXTENDED_HISTORY
 
 # --- Editor ----------------------------------------------------------------
+{{- if eq .chezmoi.os "darwin" }}
 export EDITOR="code --wait"
+{{- else }}
+# headless Linux (dgx): no VSCode — prefer nvim/vim, fall back to nano
+if command -v nvim >/dev/null 2>&1; then export EDITOR="nvim"
+elif command -v vim >/dev/null 2>&1; then export EDITOR="vim"
+else export EDITOR="nano"; fi
+{{- end }}
 export VISUAL="$EDITOR"
 
 # --- Completion ------------------------------------------------------------
@@ -69,6 +76,13 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
 # dgx: CUDA paths if NVIDIA stack is installed
 [ -d /usr/local/cuda/bin ] && export PATH="/usr/local/cuda/bin:$PATH"
 [ -d /usr/local/cuda/lib64 ] && export LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}"
+
+# dgx: Android SDK (headless build box). No-op until the SDK is installed.
+export ANDROID_HOME="$HOME/Android/sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+if [ -d "$ANDROID_HOME" ]; then
+  export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+fi
 {{- end }}
 
 # --- Local overrides (gitignored) ------------------------------------------
